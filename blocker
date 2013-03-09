@@ -1,0 +1,179 @@
+#!/usr/bin/ruby
+
+require 'json/pure'
+require 'blocker_logger'
+require 'blocker_process'
+require 'blocker_db'
+require 'rubygems'
+require 'file/tail'
+require 'ipaddr'
+
+# Config path
+config = "config.json"
+
+# Structure of config for validate
+valid_config_structure = { 	"daemon" => nil,
+				"pid" => nil,
+				"log" => nil, 
+				"db" => [
+					"port", 
+					"host", 
+					"pid", 
+					"log", 
+					"server"
+				],
+				"target" => nil,
+				"rules" => nil
+}
+
+# Structure of valid target
+valid_target_structure = [
+	"log",
+	"rules",
+	"exceptions",
+	"bantime",
+	"blockmethod"
+]
+
+ip_regexp='\b(([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b'
+
+# Check that config exist
+if not FileTest.exist?("#{config}")
+        puts "Error: no #{config} config file"
+        blocker.critical_error
+end
+
+# Read config and parse it from json
+params = JSON.parse(File.read("#{config}"))
+
+# Check for pid section
+if not params.key?('pid')
+        puts "Error: no pid section in #{config} file"
+     	exit 1  
+end
+
+# Check for log section
+if not params.key?('log')
+	puts "Error: no log section in #{config} file"
+	exit 1
+end
+
+# Daemonize
+pid = fork do
+
+	# Create new logger object
+	log = Blocker_logger.new(params['log'])
+
+	# Initialize process object
+	blocker = Blocker_process.new(log, params['pid'])
+
+	log.append "Starting blocker daemon. Pid #{$$}"
+	
+	# Validate config structure
+	valid_config_structure.each_key do |config_section|
+	
+		if not params.key?("#{config_section}")
+	                log.error("Invalid or missed config option: #{config_section} section")
+			blocker.shutdown
+	        end
+	
+		if valid_config_structure["#{config_section}"].kind_of?(Array) or valid_config_structure["#{config_section}"].kind_of?(Hash)
+			valid_config_structure["#{config_section}"].each do |config_option|
+				if not params["#{config_section}"].key?("#{config_option}")
+	                		log.error("Invalid or missed config option: #{config_option}")
+					blocker.shutdown
+		        	end
+			end
+		end
+	
+	end
+	
+	log.append "#{config} structure validated."
+	
+	# Loading IP exceptions
+	
+	ip_exceptions = {}
+	
+	log.append("Loading IP address exceptions...")
+	
+	params['exceptions'].each_key do |exception_group|
+	
+	        ip_exceptions["#{exception_group}"] = []
+	
+	        params['exceptions']["#{exception_group}"].each do |exception|
+	                ip_exceptions["#{exception_group}"] << IPAddr.new(exception.to_s)
+			log.append("ip: #{exception.to_s} to group: #{exception_group}")
+	        end
+	
+	end
+	
+	
+	# Start storage db for IP's if server = yes
+	if params['db']['server'] == "yes"
+		$db = Blocker_DB.new(params['db'], log, blocker)
+	elsif not params['db']['server'] == "no"
+		log.error "Invalid server option in db section."
+	        blocker.shutdown
+	end
+	
+	# Validate target structure
+	log.append "Start validating targets..."
+	valid_target_structure.each do |target_option|
+		params['target'].each do |target|
+		        if not target.key?("#{target_option}")
+	        	        log.error("Invalid or missed target option #{target_option} in one of targets. ")
+	                	blocker.shutdown
+		        end
+		end
+	end
+	log.append "Targets structure validated."
+	
+	# Start targets viewing
+	target_threads = []
+
+	params['target'].each do |target|
+		if FileTest.exist?("#{target['log']}")
+
+			# Loading rules for target
+                        rules = []
+                        target['rules'].each do |rule|
+                        	params['rules']["#{rule}"].each { |r| rules << r }
+                        end
+			
+			# Start new worker thread for target monitoring
+			target_threads << Thread.new do
+				File.open("#{target['log']}") do |logfile|
+					logfile.extend(File::Tail)
+					logfile.interval = 1
+					logfile.backward(1)
+					logfile.tail { |line|
+						
+						# Check line for matching 
+						rules.each do |rule|
+							if line.match(rule)
+								log.append "IP #{line.match(ip_regexp)} hitted by the rule ***#{rule}***!"
+							end 
+						end
+					}
+				end
+			end
+		else
+				log.error "Cannot open file #{target['log']} for monitoring. No such file."
+		end
+	end
+	
+	# Main loop
+	loop {
+		# Intercept TERM signal for shutdown
+		Signal.trap("TERM") do
+	        	blocker.shutdown
+		end
+	
+		# Monitor running log threads	
+		target_threads.each do |target_thread|
+			if not target_thread.alive?
+				log.error "Thread #{target_thread} exited unexceptional..."
+			end
+		end
+	}
+end

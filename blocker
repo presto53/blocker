@@ -139,6 +139,7 @@ pid = fork do
                         target['rules'].each do |rule|
                         	params['rules']["#{rule}"].each { |r| rules << r }
                         end
+			target['rules'] = rules
 			
 			# Start new worker thread for target monitoring
 			target_threads << Thread.new do
@@ -149,7 +150,7 @@ pid = fork do
 					logfile.tail { |line|
 						
 						# Check line for matching 
-						rules.each do |rule|
+						target['rules'].each do |rule|
 							if line.match(rule)
 								log.append "IP #{line.match(ip_regexp)} hitted by the rule ***#{rule}***!"
 							end 
@@ -175,5 +176,7 @@ pid = fork do
 				log.error "Thread #{target_thread} exited unexceptional..."
 			end
 		end
+
+		sleep 1
 	}
 end

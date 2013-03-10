@@ -76,13 +76,13 @@ pid = fork do
   # Validate config structure
   valid_config_structure.each_key do |config_section|
     if not params.key?("#{config_section}")
-      log.error("Invalid or missed config option: #{config_section} section")
+      log.error "Invalid or missed config option: #{config_section} section"
       blocker.shutdown
     end
     if valid_config_structure["#{config_section}"].kind_of?(Array) or valid_config_structure["#{config_section}"].kind_of?(Hash)
       valid_config_structure["#{config_section}"].each do |config_option|
         if not params["#{config_section}"].key?("#{config_option}")
-          log.error("Invalid or missed config option: #{config_option}")
+          log.error "Invalid or missed config option: #{config_option}"
           blocker.shutdown
         end
       end
@@ -92,12 +92,17 @@ pid = fork do
   
   # Loading IP exceptions
   $ip_exceptions = {}
-  log.append("Loading IP address exceptions...")
+  log.append "Loading IP address exceptions..."
   params['exceptions'].each_key do |exception_group|
     $ip_exceptions["#{exception_group}"] = []
     params['exceptions']["#{exception_group}"].each do |exception|
-      $ip_exceptions["#{exception_group}"] << exception.to_s
-      log.append("ip: #{exception.to_s} to group: #{exception_group}")
+      if !(IPAddr.new(exception.to_s) rescue nil).nil?
+        $ip_exceptions["#{exception_group}"] << exception.to_s
+        log.append("ip: #{exception.to_s} to group: #{exception_group}")
+      else
+        log.error "Failed while loading exceptions. Check that #{exception.to_s} is valid IPv4 or IPv6 address."
+        blocker.shutdown
+      end
     end
   end
    
@@ -114,7 +119,7 @@ pid = fork do
   valid_target_structure.each do |target_option|
     params['target'].each do |target|
       if not target.key?("#{target_option}")
-        log.error("Invalid or missed target option #{target_option} in one of targets. ")
+        log.error "Invalid or missed target option #{target_option} in one of targets. "
         blocker.shutdown
       end
     end

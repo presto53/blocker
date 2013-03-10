@@ -106,6 +106,20 @@ pid = fork do
     end
   end
    
+  # Check that host options has valid ip addr and port
+  if !(IPAddr.new(params['db']['host']) rescue nil).nil?
+    $db_server = params['db']['host']
+    if (1024..65535) === params['db']['port']
+      $db_port = params['db']['port']
+    else
+      log.error "Failed to set db port. Port must be between 1024 and 65535."
+      blocker.shutdown
+    end
+  else
+    log.error "Failed to set db host. Check that host #{params['db']['host']} is valid IPv4 or IPv6 address."
+    blocker.shutdown
+  end
+
   # Start storage db for IP's if server = yes
   if params['db']['server'] == "yes"
     $db = Blocker_DB.new(params['db'], log, blocker)
@@ -128,20 +142,16 @@ pid = fork do
   
   # Start targets viewing
   target_threads = []
-
   params['target'].each do |target|
     if FileTest.exist?("#{target['log']}")
-
       # Create banhammer object
       banhammer = Blocker_banhammer.new(target)
-
       # Loading rules for target
       rules = []
       target['rules'].each do |rule|
         params['rules']["#{rule}"].each { |r| rules << r }
       end
-      target['rules'] = rules
-      
+      target['rules'] = rules 
       # Start new worker thread for target monitoring
       target_threads << Thread.new do
         File.open("#{target['log']}") do |logfile|
@@ -157,12 +167,12 @@ pid = fork do
                 words.each { |word| ip_matched << word if !word.match(ipaddr_regexp).nil? }
                 if ip_matched.size == 1
                   if banhammer.ip_exception?(ip_matched[0].to_s)
-                    log.append "IP #{ip_matched[0].to_s} hitted by the rule ***#{rule}***! But it's in exception list."
+                    log.append "IP #{ip_matched[0].to_s} hitted by the rule ***#{rule}***! But it is in exception list."
                   else
                     log.append "IP #{ip_matched[0].to_s} hitted by the rule ***#{rule}***!"
                   end
                 else
-                  log.append "More than #{ip_matched.size} IP addresses matched. Skip."
+                  log.append "#{ip_matched.size} IP addresses matched. Skip."
                 end
               end 
             end

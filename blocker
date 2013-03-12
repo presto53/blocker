@@ -6,6 +6,7 @@ require 'blocker_logger'
 require 'blocker_process'
 require 'blocker_banhammer'
 require 'blocker_db'
+require 'tycoon'
 require 'rubygems'
 require 'file/tail'
 require 'ipaddr'
@@ -140,7 +141,11 @@ pid = fork do
     end
   end
   log.append 'Targets structure validated.'
-  
+
+  # Check db connection
+  tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
+  error_exit "Can not connect to db server #{params['db']['host']}:#{params['db']['port']}." if tycoon.nil?
+
   # Start targets viewing
   target_threads = []
   params['target'].each do |target|
@@ -167,10 +172,13 @@ pid = fork do
                 words = line.split
                 words.each { |word| ip_matched << word if !word.match(ipaddr_regexp).nil? }
                 if ip_matched.size == 1
-                  if banhammer.ip_exception?(ip_matched[0].to_s)
-                    log.append "IP #{ip_matched[0].to_s} hit by the rule ***#{rule}***! But it is in exception list."
+                  ip = ip_matched.join
+                  if banhammer.ip_exception?(ip)
+                    log.append "IP #{ip} hit by the rule ***#{rule}***! But it is in exception list."
                   else
-                    log.append "IP #{ip_matched[0].to_s} hit by the rule ***#{rule}***!"
+                    log.append "IP #{ip} hit by the rule ***#{rule}***!"
+                    value = 'hit'
+                    log.error "Can not set in db key: #{ip} value: #{value}" if tycoon.set_value(ip,value, "#{target['bantime']}").nil?
                   end
                 else
                   log.append "#{ip_matched.size} IP addresses matched. Skip."

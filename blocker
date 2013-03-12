@@ -146,8 +146,7 @@ pid = fork do
   log.append 'Targets structure validated.'
 
   # Check db connection
-  #tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
-  tycoon = Tycoon.new('presto.so', '4200') rescue nil
+  tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
   error_exit "Can not connect to db server #{params['db']['host']}:#{params['db']['port']}." if tycoon.nil?
 
   # Start targets viewing

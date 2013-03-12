@@ -5,7 +5,7 @@ class Blocker_process
 		@log = log
 		@pidf = pidf
 		if FileTest.exist?(@pidf)
-			system("kill -0 $(cat #{@pidf} 2>/dev/null) 2>/dev/null")
+			`kill -0 $(cat #{@pidf}` #` 2>/dev/null) 2>/dev/null")`
 			if $? == 0
 	                        @log.error 'Blocker daemon seems already running.'
                 	        @log.close

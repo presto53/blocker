@@ -61,8 +61,25 @@ fork do
   # Create new logger object
   log = Blocker_logger.new(params['log'])
 
+  if RUBY_VERSION < '1.9'
+    exit if fork
+    Process.setsid
+    exit if fork
+    Dir.chdir '/'
+    STDIN.reopen '/dev/null'
+    STDOUT.reopen '/dev/null', 'a'
+    STDERR.reopen '/dev/null', 'a'
+  else
+    Process.daemon
+  end
+
   # Initialize process object
   blocker = Blocker_process.new(log, params['pid'])
+
+  # Intercept TERM signal for shutdown
+  Signal.trap('TERM') do
+    blocker.shutdown
+  end
 
   # Error exit func
   def error_exit(error)
@@ -169,15 +186,10 @@ fork do
       log.error "Cannot open file #{target['log']} for monitoring. No such file."
     end
   end
-  
+
   # Main loop
   loop {
-    # Intercept TERM signal for shutdown
-    # *** May be we should move it out of main loop?
-    Signal.trap('TERM') do
-      blocker.shutdown
-    end
-  
+
     # Monitor running log threads  
     target_threads.each do |target_thread|
       error_exit "Thread #{target_thread} exited unexceptional..." if not target_thread.alive?

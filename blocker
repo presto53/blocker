@@ -55,12 +55,11 @@ raise "no pid section in #{config} file" if not params.key?('pid')
 # Check for log section
 raise "no log section in #{config} file" if not params.key?('log')
 
+# Create new logger object
+log = Blocker_logger.new(params['log'])
+
 # Daemonize
-fork do
-
-  # Create new logger object
-  log = Blocker_logger.new(params['log'])
-
+pid = fork do
   if RUBY_VERSION < '1.9'
     exit if fork
     Process.setsid
@@ -74,17 +73,17 @@ fork do
   end
 
   # Initialize process object
-  blocker = Blocker_process.new(log, params['pid'])
+  $blocker = Blocker_process.new(log, params['pid'])
 
   # Intercept TERM signal for shutdown
   Signal.trap('TERM') do
-    blocker.shutdown
+    $blocker.shutdown
   end
 
   # Error exit func
   def error_exit(error)
     log.error "#{error}"
-    blocker.shutdown
+    $blocker.shutdown
   end
 
   log.append "Starting blocker daemon. Pid #{$$}"
@@ -129,7 +128,7 @@ fork do
 
   # Start storage db if server = yes
   if params['db']['server'] == 'yes'
-    $db = Blocker_DB.new(params['db'], log, blocker)
+    $db = Blocker_DB.new(params['db'], log, $blocker)
   elsif not params['db']['server'] == 'no'
     error_exit 'Invalid server option in db section.'
   end
@@ -198,3 +197,4 @@ fork do
     sleep 1
   }
 end
+Process.detach(pid)

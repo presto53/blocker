@@ -1,5 +1,4 @@
 #!/usr/bin/ruby
-
 $LOAD_PATH << '.'
 
 require 'json/pure'

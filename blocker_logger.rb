@@ -1,20 +1,21 @@
 class Blocker_logger
 
-        def initialize (file)
-                @logf = File.open(file, "a")
-        end
+  def initialize (file)
+    @logf = File.open(file, "a")
+  end
 
-        def append(option)
-                @logf.puts "#{Time.now} [INFO] #{option}"
+  def append(option)
+    @logf.puts "#{Time.now} [INFO] #{option}"
 		@logf.fsync
-        end
+  end
 
 	def error(option)
-                @logf.puts "#{Time.now} [ERROR] #{option}"
+    @logf.puts "#{Time.now} [ERROR] #{option}"
 		@logf.fsync
-        end
+  end
 
-        def close
-                @logf.close
-        end
+  def close
+    @logf.close
+  end
+
 end

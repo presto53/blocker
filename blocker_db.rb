@@ -7,10 +7,10 @@ class Blocker_DB
 		@options = options
 		@running = false
 
-		if FileTest.exist?("#{@options['pid']}")
+		if FileTest.exist?(@options['pid'])
 			system("kill -0 $(cat #{@options['pid']} 2>/dev/null) 2>/dev/null")
 			if $? == 0
-	                        @log.error "DB daemon seems already running."
+	                        @log.error 'DB daemon seems already running.'
 				@blocker.shutdown
 			else
 				self.start_db
@@ -24,29 +24,29 @@ class Blocker_DB
 		if (1024..65535) === @options['port']
 			system("/usr/bin/ktserver -host #{@options['host']} -port #{@options['port']} -tout 10 -ls -dmn -pid #{@options['pid']} -log #{@options['log']} -th 8 *#bnum=8000#msiz=64m")
                         if not $? == 0
-                        	@log.error "DB server start fail."
+                        	@log.error 'DB server start fail.'
                         	@blocker.shutdown
 			else
 				@running = true
                         end
                 else
-                	@log.error "No port option in config or port is invalid. Port must be between 1024 and 65535."
+                	@log.error 'No port option in config or port is invalid. Port must be between 1024 and 65535.'
                         @blocker.shutdown
                 end
 	end
 
 	def stop_db
-		if FileTest.exist?("#{@options['pid']}")
-			@log.append "Send TERM signal to DB process."
+		if FileTest.exist?(@options['pid'])
+			@log.append 'Send TERM signal to DB process.'
 			system("kill -TERM $(cat #{@options['pid']} 2>/dev/null) 2>/dev/null")
 			success = false
                         until success == true do
 				system("kill -0 $(cat #{@options['pid']} 2>/dev/null) 2>/dev/null")
 				if $? == 0
-                                	@log.append "Wait for DB process exit..."
+                                	@log.append 'Wait for DB process exit...'
 					sleep 1
 				else
-					@log.append "DB process exit sucessfully..."
+					@log.append 'DB process exit sucessfully...'
 					success = true
 					@running = false
 					@blocker.shutdown

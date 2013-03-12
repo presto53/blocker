@@ -1,7 +1,7 @@
 class Blocker_logger
 
         def initialize (file)
-                @logf = File.open("#{file}", "a")
+                @logf = File.open(file, "a")
         end
 
         def append(option)

@@ -1,5 +1,7 @@
 #!/usr/bin/ruby
 
+$LOAD_PATH << '.'
+
 require 'json/pure'
 require 'blocker_logger'
 require 'blocker_process'
@@ -10,60 +12,51 @@ require 'file/tail'
 require 'ipaddr'
 
 # Config path
-config = "config.json"
+config = 'config.json'
 
 # Structure of config for validate
 valid_config_structure = {
-        "daemon" => nil,
-        "pid" => nil,
-        "log" => nil, 
-        "db" => [
-          "port", 
-          "host", 
-          "pid", 
-          "log", 
-          "server"
-        ],
-        "target" => nil,
-        "rules" => nil
+    'daemon' => nil,
+    'pid' => nil,
+    'log' => nil,
+    'db' => [
+        'server',
+        'host',
+        'port',
+        'pid',
+        'log'
+    ],
+    'target' => nil,
+    'rules' => nil
 }
 
 # Structure of valid target
 valid_target_structure = [
-  "log",
-  "rules",
-  "exceptions",
-  "bantime",
-  "blockmethod"
+  'log',
+  'rules',
+  'exceptions',
+  'bantime',
+  'blockmethod'
 ]
 
 # IPv4 and IPv6 regexp for matching source addresses from log
-# IPv6 part getted from http://vernon.mauery.com/content/projects/linux/ipv6_regex
+# IPv6 part from http://vernon.mauery.com/content/projects/linux/ipv6_regex
 ipaddr_regexp = '((\A([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,6}\Z)|(\A([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}\Z)|(\A([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}\Z)|(\A([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}\Z)|(\A([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}\Z)|(\A([0-9a-f]{1,4}:){1,6}(:[0-9a-f]{1,4}){1,1}\Z)|(\A(([0-9a-f]{1,4}:){1,7}|:):\Z)|(\A:(:[0-9a-f]{1,4}){1,7}\Z)|(\A((([0-9a-f]{1,4}:){6})(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})\Z)|(\A(([0-9a-f]{1,4}:){5}[0-9a-f]{1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})\Z)|(\A([0-9a-f]{1,4}:){5}:[0-9a-f]{1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\Z)|(\A([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,4}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\Z)|(\A([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,3}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\Z)|(\A([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,2}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\Z)|(\A([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,1}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\Z)|(\A(([0-9a-f]{1,4}:){1,5}|:):(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\Z)|(\A:(:[0-9a-f]{1,4}){1,5}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\Z))|(([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){2}([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))'
 
 # Check that config exist
-if not FileTest.exist?("#{config}")
-  puts "Error: no #{config} config file"
-  blocker.critical_error
-end
+raise "no #{config} config file" if not FileTest.exist?(config)
 
 # Read config and parse it from json
-params = JSON.parse(File.read("#{config}"))
+params = JSON.parse(File.read(config))
 
 # Check for pid section
-if not params.key?('pid')
-  puts "Error: no pid section in #{config} file"
-  exit 1  
-end
+raise "no pid section in #{config} file" if not params.key?('pid')
 
 # Check for log section
-if not params.key?('log')
-  puts "Error: no log section in #{config} file"
-  exit 1
-end
+raise "no log section in #{config} file" if not params.key?('log')
 
 # Daemonize
-pid = fork do
+fork do
 
   # Create new logger object
   log = Blocker_logger.new(params['log'])
@@ -71,20 +64,20 @@ pid = fork do
   # Initialize process object
   blocker = Blocker_process.new(log, params['pid'])
 
+  # Error exit func
+  def error_exit(error)
+    log.error "#{error}"
+    blocker.shutdown
+  end
+
   log.append "Starting blocker daemon. Pid #{$$}"
   
   # Validate config structure
   valid_config_structure.each_key do |config_section|
-    if not params.key?("#{config_section}")
-      log.error "Invalid or missed config option: #{config_section} section"
-      blocker.shutdown
-    end
-    if valid_config_structure["#{config_section}"].kind_of?(Array) or valid_config_structure["#{config_section}"].kind_of?(Hash)
-      valid_config_structure["#{config_section}"].each do |config_option|
-        if not params["#{config_section}"].key?("#{config_option}")
-          log.error "Invalid or missed config option: #{config_option}"
-          blocker.shutdown
-        end
+    error_exit "Invalid or missed config option: #{config_section} section" if not params.key?(config_section)
+    if valid_config_structure[config_section].kind_of?(Array) or valid_config_structure[config_section].kind_of?(Hash)
+      valid_config_structure[config_section].each do |config_option|
+        error_exit "Invalid or missed config option: #{config_option}" if not params[config_section].key?(config_option)
       end
     end
   end
@@ -92,69 +85,62 @@ pid = fork do
   
   # Loading IP exceptions
   $ip_exceptions = {}
-  log.append "Loading IP address exceptions..."
+  log.append 'Loading IP address exceptions...'
   params['exceptions'].each_key do |exception_group|
-    $ip_exceptions["#{exception_group}"] = []
-    params['exceptions']["#{exception_group}"].each do |exception|
-      if !(IPAddr.new(exception.to_s) rescue nil).nil?
-        $ip_exceptions["#{exception_group}"] << exception.to_s
-        log.append("ip: #{exception.to_s} to group: #{exception_group}")
+    $ip_exceptions[exception_group] = []
+    params['exceptions'][exception_group].each do |exception|
+      if (IPAddr.new(exception.to_s) rescue nil).nil?
+        error_exit "Failed while loading exceptions. Check that #{exception.to_s} is valid IPv4 or IPv6 address."
       else
-        log.error "Failed while loading exceptions. Check that #{exception.to_s} is valid IPv4 or IPv6 address."
-        blocker.shutdown
+        $ip_exceptions[exception_group] << exception.to_s
+        log.append "ip: #{exception.to_s} to group: #{exception_group}"
       end
     end
   end
    
   # Check that host options has valid ip addr and port
-  if !(IPAddr.new(params['db']['host']) rescue nil).nil?
+  if (IPAddr.new(params['db']['host']) rescue nil).nil?
+    error_exit "Failed to set db host. Check that host #{params['db']['host']} is valid IPv4 or IPv6 address."
+  else
     $db_server = params['db']['host']
     if (1024..65535) === params['db']['port']
       $db_port = params['db']['port']
     else
-      log.error "Failed to set db port. Port must be between 1024 and 65535."
-      blocker.shutdown
+      error_exit 'Failed to set db port. Port must be between 1024 and 65535.'
     end
-  else
-    log.error "Failed to set db host. Check that host #{params['db']['host']} is valid IPv4 or IPv6 address."
-    blocker.shutdown
   end
 
-  # Start storage db for IP's if server = yes
-  if params['db']['server'] == "yes"
+  # Start storage db if server = yes
+  if params['db']['server'] == 'yes'
     $db = Blocker_DB.new(params['db'], log, blocker)
-  elsif not params['db']['server'] == "no"
-    log.error "Invalid server option in db section."
-    blocker.shutdown
+  elsif not params['db']['server'] == 'no'
+    error_exit 'Invalid server option in db section.'
   end
   
   # Validate target structure
-  log.append "Start validating targets..."
+  log.append 'Start validating targets...'
   valid_target_structure.each do |target_option|
     params['target'].each do |target|
-      if not target.key?("#{target_option}")
-        log.error "Invalid or missed target option #{target_option} in one of targets. "
-        blocker.shutdown
-      end
+        error_exit "Invalid or missed target option #{target_option} in one of targets." if not target.key?(target_option)
     end
   end
-  log.append "Targets structure validated."
+  log.append 'Targets structure validated.'
   
   # Start targets viewing
   target_threads = []
   params['target'].each do |target|
-    if FileTest.exist?("#{target['log']}")
+    if FileTest.exist?(target['log'])
       # Create banhammer object
       banhammer = Blocker_banhammer.new(target)
       # Loading rules for target
       rules = []
       target['rules'].each do |rule|
-        params['rules']["#{rule}"].each { |r| rules << r }
+        params['rules'][rule].each { |r| rules << r }
       end
       target['rules'] = rules 
       # Start new worker thread for target monitoring
       target_threads << Thread.new do
-        File.open("#{target['log']}") do |logfile|
+        File.open(target['log']) do |logfile|
           logfile.extend(File::Tail)
           logfile.interval = 1
           logfile.backward(1)
@@ -167,9 +153,9 @@ pid = fork do
                 words.each { |word| ip_matched << word if !word.match(ipaddr_regexp).nil? }
                 if ip_matched.size == 1
                   if banhammer.ip_exception?(ip_matched[0].to_s)
-                    log.append "IP #{ip_matched[0].to_s} hitted by the rule ***#{rule}***! But it is in exception list."
+                    log.append "IP #{ip_matched[0].to_s} hit by the rule ***#{rule}***! But it is in exception list."
                   else
-                    log.append "IP #{ip_matched[0].to_s} hitted by the rule ***#{rule}***!"
+                    log.append "IP #{ip_matched[0].to_s} hit by the rule ***#{rule}***!"
                   end
                 else
                   log.append "#{ip_matched.size} IP addresses matched. Skip."
@@ -188,15 +174,13 @@ pid = fork do
   loop {
     # Intercept TERM signal for shutdown
     # *** May be we should move it out of main loop?
-    Signal.trap("TERM") do
+    Signal.trap('TERM') do
       blocker.shutdown
     end
   
     # Monitor running log threads  
     target_threads.each do |target_thread|
-      if not target_thread.alive?
-        log.error "Thread #{target_thread} exited unexceptional..."
-      end
+      error_exit "Thread #{target_thread} exited unexceptional..." if not target_thread.alive?
     end
 
     sleep 1

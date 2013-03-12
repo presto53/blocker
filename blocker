@@ -181,7 +181,7 @@ pid = fork do
                     log.error "Can not set in db key: #{ip} value: #{value}" if tycoon.set_value(ip,value, "#{target['bantime']}").nil?
                   end
                 else
-                  log.append "#{ip_matched.size} IP addresses matched. Skip."
+                  log.warning "#{ip_matched.size} IP addresses matched. Skip."
                 end
               end 
             end

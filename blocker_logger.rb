@@ -9,6 +9,11 @@ class Blocker_logger
 		@logf.fsync
   end
 
+  def warning(option)
+    @logf.puts "#{Time.now} [WARN] #{option}"
+    @logf.fsync
+  end
+
 	def error(option)
     @logf.puts "#{Time.now} [ERROR] #{option}"
 		@logf.fsync

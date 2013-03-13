@@ -47,19 +47,25 @@ class Blocker_DB
 
 	def stop_db
 		if FileTest.exist?(@options['pid'])
-      success = false
-			$log.append 'Send TERM signal to DB process.'
+      $log.append 'Send TERM signal to DB process.'
 			pid =  File.read(@options['pid']).to_i
       alive = Process.kill('TERM', pid) rescue nil
       if alive
-        until success do
-          $log.append 'Wait for DB process exit...'
+        success = false
+        10.times do
           alive = Process.kill(0, pid) rescue nil
           success = true if alive.nil?
+          break if success == true
+          $log.append 'Wait for DB process exit...'
           sleep 1
         end
-        $log.append 'DB process exit successfully...'
-        @running = false
+        if success == true
+          $log.append 'DB process exit successfully...'
+          @running = false
+        else
+          $log.warning 'DB process could not shutdown. Please check logs...'
+          @running = true
+        end
       else
         $log.append 'DB process seem not running...'
       end

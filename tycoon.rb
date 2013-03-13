@@ -6,11 +6,12 @@ class Tycoon
     @ktserver = 'KyotoTycoon\/([0-9]{1,}\.){1,}[0-9]{1,}'
     @url = "http://#{host}:#{port}"
     uri = URI.parse(URI.escape("#{@url}/rpc/report"))
-    if response = Net::HTTP.get_response(uri)
+    response = Net::HTTP.get_response(uri)
+    if response.nil?
+      raise "Server #{@url} is unreachable."
+    else
       server_field = response.get_fields('Server').join
       raise "Server #{@url} is not Kyoto Tycoon" if server_field.nil? or not server_field.match(@ktserver)
-    else
-      raise "Server #{@url} is unreachable."
     end
   end
 

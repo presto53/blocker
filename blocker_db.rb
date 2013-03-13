@@ -20,11 +20,11 @@ class Blocker_DB
 	def start_db
 		if (1024..65535) === @options['port']
 			system("/usr/bin/ktserver -host #{@options['host']} -port #{@options['port']} -tout 10 -ls -dmn -pid #{@options['pid']} -log #{@options['log']} -th 8 *#bnum=8000#msiz=64m")
-      if not $? == 0
+      if $? == 0
+        @running = true
+      else
         $log.error 'DB server start fail.'
         @blocker.shutdown
-			else
-				@running = true
       end
     else
       $log.error 'No port option in config or port is invalid. Port must be between 1024 and 65535.'
@@ -37,13 +37,13 @@ class Blocker_DB
 			$log.append 'Send TERM signal to DB process.'
 			system("kill -TERM $(cat #{@options['pid']})")
 			success = false
-      until success == true do
+      until success do
 				system("kill -0 $(cat #{@options['pid']})")
 				if $? == 0
          	$log.append 'Wait for DB process exit...'
 					sleep 1
 				else
-					$log.append 'DB process exit sucessfully...'
+					$log.append 'DB process exit successfully...'
 					success = true
 					@running = false
 					@blocker.shutdown

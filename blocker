@@ -26,7 +26,8 @@ valid_config_structure = {
         'port',
         'pid',
         'log',
-        'bin'
+        'bin',
+        'timeout'
     ],
     'target' => nil,
     'rules' => nil
@@ -142,8 +143,18 @@ pid = fork do
   end
 
   # Check db connection
-  $tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
-  error_exit "Could not connect to db server #{params['db']['host']}:#{params['db']['port']}." if $tycoon.nil?
+  params['db']['timeout'].times do
+    log.append 'Trying connect to db server...'
+    $tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
+    if $tycoon.nil?
+      success = nil
+    else
+      success = true
+      break
+    end
+    sleep 1
+  end
+  error_exit "Could not connect to db server #{params['db']['host']}:#{params['db']['port']}." if success.nil?
 
   # Validate target structure
   $log.append 'Start validating targets...'

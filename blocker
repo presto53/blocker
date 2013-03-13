@@ -59,7 +59,7 @@ raise "no pid section in #{config} file" if not params.key?('pid')
 raise "no log section in #{config} file" if not params.key?('log')
 
 # Create new logger object
-log = Blocker_logger.new(params['log'])
+$log = Blocker_logger.new(params['log'])
 
 # Daemonize
 pid = fork do
@@ -76,7 +76,7 @@ pid = fork do
   end
 
   # Initialize process object
-  $blocker = Blocker_process.new(log, params['pid'])
+  $blocker = Blocker_process.new(params['pid'])
 
   # Intercept TERM signal for shutdown
   Signal.trap('TERM') do
@@ -85,11 +85,11 @@ pid = fork do
 
   # Error exit func
   def error_exit(error)
-    log.error "#{error}"
+    $log.error "#{error}"
     $blocker.shutdown
   end
 
-  log.append "Starting blocker daemon. Pid #{$$}"
+  $log.append "Starting blocker daemon. Pid #{$$}"
   
   # Validate config structure
   valid_config_structure.each_key do |config_section|
@@ -100,11 +100,11 @@ pid = fork do
       end
     end
   end
-  log.append "#{config} structure validated."
+  $log.append "#{config} structure validated."
   
   # Loading IP exceptions
   $ip_exceptions = {}
-  log.append 'Loading IP address exceptions...'
+  $log.append 'Loading IP address exceptions...'
   params['exceptions'].each_key do |exception_group|
     $ip_exceptions[exception_group] = []
     params['exceptions'][exception_group].each do |exception|
@@ -112,7 +112,7 @@ pid = fork do
         error_exit "Failed while loading exceptions. Check that #{exception.to_s} is valid IPv4 or IPv6 address."
       else
         $ip_exceptions[exception_group] << IPAddr.new(exception.to_s)
-        log.append "ip: #{exception.to_s} to group: #{exception_group}"
+        $log.append "ip: #{exception.to_s} to group: #{exception_group}"
       end
     end
   end
@@ -137,24 +137,24 @@ pid = fork do
   end
   
   # Validate target structure
-  log.append 'Start validating targets...'
+  $log.append 'Start validating targets...'
   valid_target_structure.each do |target_option|
     params['target'].each do |target|
         error_exit "Invalid or missed target option #{target_option} in one of targets." if not target.key?(target_option)
     end
   end
-  log.append 'Targets structure validated.'
+  $log.append 'Targets structure validated.'
 
   # Check db connection
-  tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
-  error_exit "Can not connect to db server #{params['db']['host']}:#{params['db']['port']}." if tycoon.nil?
+  $tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
+  error_exit "Could not connect to db server #{params['db']['host']}:#{params['db']['port']}." if $tycoon.nil?
 
   # Start targets viewing
   target_threads = []
   params['target'].each do |target|
     if FileTest.exist?(target['log'])
       # Create banhammer object
-      banhammer = Blocker_banhammer.new(target, log)
+      banhammer = Blocker_banhammer.new(target)
       # Loading rules for target
       rules = []
       target['rules'].each do |rule|
@@ -177,14 +177,13 @@ pid = fork do
                 if ip_matched.size == 1
                   ip = ip_matched.join
                   if banhammer.ip_exception?(ip)
-                    log.append "IP #{ip} hit by the rule ***#{rule}***! But it is in exception list."
+                    $log.append "IP #{ip} hit by the rule ***#{rule}***! But it is in exception list."
                   else
-                    log.append "IP #{ip} hit by the rule ***#{rule}***!"
-                    value = 'hit'
-                    log.warning "Can not set in db key: #{ip} value: #{value}" if tycoon.set_value(ip,value, "#{target['bantime']}").nil?
+                    $log.append "IP #{ip} hit by the rule ***#{rule}***!"
+                    banhammer.ban(ip)
                   end
                 else
-                  log.warning "#{ip_matched.size} IP addresses matched. Skip."
+                  $log.warning "#{ip_matched.size} IP addresses matched. Skip."
                 end
               end 
             end
@@ -192,7 +191,7 @@ pid = fork do
         end
       end
     else
-      log.error "Cannot open file #{target['log']} for monitoring. No such file."
+      $log.error "Cannot open file #{target['log']} for monitoring. No such file."
     end
   end
 

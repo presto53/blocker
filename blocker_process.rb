@@ -1,14 +1,13 @@
 class Blocker_process
 
-  def initialize (log,pidf)
+  def initialize (pidf)
     @pid = $$
-		@log = log
 		@pidf = pidf
 		if FileTest.exist?(@pidf)
 			system("kill -0 $(cat #{@pidf})")
 			if $? == 0
-	      @log.error 'Blocker daemon seems already running.'
-        @log.close
+	      $log.error 'Blocker daemon seems already running.'
+        $log.close
 				exit 1
 			else
 				File.open(@pidf, 'w') {|f| f.puts(@pid)}
@@ -20,14 +19,14 @@ class Blocker_process
 
   def shutdown
 		$db.stop_db if not $db.nil? and $db.running?
-		@log.append("Stopping blocker daemon: pid #{@pid}...")
-		@log.close
+		$log.append("Stopping blocker daemon: pid #{@pid}...")
+		$log.close
 		pid_remove
 		exit 1
   end
 
 	def critical_error
-    @log.append("Stopping blocker daemon: pid #{@pid}...")
+    $log.append("Stopping blocker daemon: pid #{@pid}...")
 		pid_remove
     exit 100
   end

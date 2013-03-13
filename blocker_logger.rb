@@ -6,7 +6,7 @@ class Blocker_logger
 
   def append(option)
     @logf.puts "#{Time.now} [INFO] #{option}"
-		@logf.fsync
+    @logf.fsync
   end
 
   def warning(option)
@@ -14,9 +14,9 @@ class Blocker_logger
     @logf.fsync
   end
 
-	def error(option)
+  def error(option)
     @logf.puts "#{Time.now} [ERROR] #{option}"
-		@logf.fsync
+    @logf.fsync
   end
 
   def close

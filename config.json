@@ -1,34 +1,34 @@
 {
-	"pid": "/var/run/blocker.pid",
-	"log": "/var/log/blocker.log",
-        "db": {
-		    "server": "yes",
-		    "host": "127.0.0.1",
-            "port": 4200,
-            "pid": "/var/run/blocker_db.pid",
-            "log": "/var/log/blocker_db.log",
-            "bin": "/usr/bin/ktserver",
-            "timeout": 10
-        },
-	"target": [
-			{ "log": "/var/log/auth.log", "rules": ["ssh"], "exceptions": ["internal","home"], "bantime": "300", "blockmethod": "iptables" }
-		],
-	"rules": {
-		"ssh": [
-			"^test regexp$",
-			"^second test$",
-			"Failed password for"
-		]	
-	},
-	"exceptions": {
-		"internal": [
+    "pid": "/var/run/blocker.pid",
+    "log": "/var/log/blocker.log",
+    "db": {
+        "server": "yes",
+        "host": "127.0.0.1",
+        "port": 4200,
+        "pid": "/var/run/blocker_db.pid",
+        "log": "/var/log/blocker_db.log",
+        "bin": "/usr/bin/ktserver",
+        "timeout": 10
+    },
+    "target": [
+        { "log": "/var/log/auth.log", "rules": ["ssh"], "exceptions": ["internal","home"], "bantime": "300", "blockmethod": "iptables" }
+    ],
+    "rules": {
+        "ssh": [
+            "^test regexp$",
+            "^second test$",
+            "Failed password for"
+        ]
+    },
+    "exceptions": {
+        "internal": [
             "127.0.0.1",
-			"192.168.0.0/16",
-			"172.16.0.0/16",
-			"10.0.0.0/8"
-		],
-		"home": [
-			"8.8.8.8"
-		]
-	}
+            "192.168.0.0/16",
+            "172.16.0.0/16",
+            "10.0.0.0/8"
+        ],
+        "home": [
+            "8.8.8.8"
+        ]
+    }
 }

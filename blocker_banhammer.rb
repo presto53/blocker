@@ -1,20 +1,20 @@
 class Blocker_banhammer
 
-	def initialize(target)
-		@target = target
+  def initialize(target)
+    @target = target
     if @target['blockmethod'] == 'iptables'
       @method = 'i'
     else
       $log.error "unknown block method #{@target['blockmethod']}."
       $blocker.exit
     end
-	end
+  end
 
-	def ip_exception?(ip)
-		@target['exceptions'].each do |exception_group|
-			if $ip_exceptions.key?(exception_group)
+  def ip_exception?(ip)
+    @target['exceptions'].each do |exception_group|
+      if $ip_exceptions.key?(exception_group)
         $ip_exceptions[exception_group].each do |exception|
-           return true if exception.include?(IPAddr.new(ip))
+          return true if exception.include?(IPAddr.new(ip))
         end
       else
         $log.error "no exception group #{exception_group}."
@@ -22,9 +22,9 @@ class Blocker_banhammer
       end
     end
     false
-	end
+  end
 
-	def ban(ip)
+  def ban(ip)
     key = "#{@method}_#{ip}"
     value = $tycoon.get_value(key)
     if value.nil?
@@ -37,6 +37,6 @@ class Blocker_banhammer
       end
       log.warning "Can not set in db, key: #{key} value: #{hit_counter}." if $tycoon.set_value(key,hit_counter, @target['bantime']).nil?
     end
-	end
+  end
 
 end

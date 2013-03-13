@@ -3,26 +3,26 @@ require 'posix/spawn'
 
 class Blocker_DB
 
-	def initialize (options, blocker)
-		@blocker = blocker
-		@options = options
-		@running = false
-		if FileTest.exist?(@options['pid'])
+  def initialize (options, blocker)
+    @blocker = blocker
+    @options = options
+    @running = false
+    if FileTest.exist?(@options['pid'])
       pid =  File.read(@options['pid']).to_i
-			alive = Process.kill(0, pid) rescue nil
-			if alive
-	      $log.error 'DB daemon seems already running.'
-				@blocker.shutdown
-			else
-				self.start_db
-			end
-		else
-			self.start_db
-		end
-	end
+      alive = Process.kill(0, pid) rescue nil
+      if alive
+        $log.error 'DB daemon seems already running.'
+        @blocker.shutdown
+      else
+        self.start_db
+      end
+    else
+      self.start_db
+    end
+  end
 
-	def start_db
-		if (1024..65535) === @options['port']
+  def start_db
+    if (1024..65535) === @options['port']
       args = "-port #{@options['port']} -tout 10 -ls -dmn -pid #{@options['pid']} -log #{@options['log']} -th 8 *#bnum=8000#msiz=64m"
       cmd = "#{@options['bin']} #{args}"
       $threads << Thread.new do
@@ -43,12 +43,12 @@ class Blocker_DB
       $log.error 'No port option in config or port is invalid. Port must be between 1024 and 65535.'
       @blocker.shutdown
     end
-	end
+  end
 
-	def stop_db
-		if FileTest.exist?(@options['pid'])
+  def stop_db
+    if FileTest.exist?(@options['pid'])
       $log.append 'Send TERM signal to DB process.'
-			pid =  File.read(@options['pid']).to_i
+      pid =  File.read(@options['pid']).to_i
       alive = Process.kill('TERM', pid) rescue nil
       if alive
         success = false
@@ -73,10 +73,10 @@ class Blocker_DB
       $log.error "DB pid file does not exist. No #{@options['pid']}"
     end
 
-	end
+  end
 
-	def running?
-		@running
-	end
+  def running?
+    @running
+  end
 
 end

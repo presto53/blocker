@@ -34,11 +34,11 @@ valid_config_structure = {
 
 # Structure of valid target
 valid_target_structure = [
-  'log',
-  'rules',
-  'exceptions',
-  'bantime',
-  'blockmethod'
+    'log',
+    'rules',
+    'exceptions',
+    'bantime',
+    'blockmethod'
 ]
 
 # IPv4 and IPv6 regexp for matching source addresses from log
@@ -95,7 +95,7 @@ pid = fork do
   end
 
   $log.append "Starting blocker daemon. Pid #{$$}"
-  
+
   # Validate config structure
   valid_config_structure.each_key do |config_section|
     error_exit "Invalid or missed config option: #{config_section} section" if not params.key?(config_section)
@@ -106,7 +106,7 @@ pid = fork do
     end
   end
   $log.append "#{config} structure validated."
-  
+
   # Loading IP exceptions
   $ip_exceptions = {}
   $log.append 'Loading IP address exceptions...'
@@ -121,7 +121,7 @@ pid = fork do
       end
     end
   end
-   
+
   # Check that host options has valid ip addr and port
   if (IPAddr.new(params['db']['host']) rescue nil).nil?
     error_exit "Failed to set db host. Check that host #{params['db']['host']} is valid IPv4 or IPv6 address."
@@ -163,7 +163,7 @@ pid = fork do
   $log.append 'Start validating targets...'
   valid_target_structure.each do |target_option|
     params['target'].each do |target|
-        error_exit "Invalid or missed target option #{target_option} in one of targets." if not target.key?(target_option)
+      error_exit "Invalid or missed target option #{target_option} in one of targets." if not target.key?(target_option)
     end
   end
   $log.append 'Targets structure validated.'
@@ -178,14 +178,14 @@ pid = fork do
       target['rules'].each do |rule|
         params['rules'][rule].each { |r| rules << r }
       end
-      target['rules'] = rules 
+      target['rules'] = rules
       # Start new worker thread for target monitoring
       $threads << Thread.new do
         File.open(target['log']) do |logfile|
           logfile.extend(File::Tail)
           logfile.interval = 1
           logfile.backward(1)
-          logfile.tail do |line|  
+          logfile.tail do |line|
             # Check line for matching 
             target['rules'].each do |rule|
               if line.match(rule)
@@ -203,7 +203,7 @@ pid = fork do
                 else
                   $log.warning "#{ip_matched.size} IP addresses matched. Skip."
                 end
-              end 
+              end
             end
           end
         end

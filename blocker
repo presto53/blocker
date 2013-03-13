@@ -9,6 +9,7 @@ require 'blocker_db'
 require 'tycoon'
 require 'rubygems'
 require 'file/tail'
+require 'posix/spawn'
 require 'ipaddr'
 
 # Config path
@@ -151,7 +152,7 @@ pid = fork do
   error_exit "Could not connect to db server #{params['db']['host']}:#{params['db']['port']}." if $tycoon.nil?
 
   # Start targets viewing
-  target_threads = []
+  $threads = []
   params['target'].each do |target|
     if FileTest.exist?(target['log'])
       # Create banhammer object
@@ -163,7 +164,7 @@ pid = fork do
       end
       target['rules'] = rules 
       # Start new worker thread for target monitoring
-      target_threads << Thread.new do
+      $threads << Thread.new do
         File.open(target['log']) do |logfile|
           logfile.extend(File::Tail)
           logfile.interval = 1
@@ -200,8 +201,8 @@ pid = fork do
   loop {
 
     # Monitor running log threads  
-    target_threads.each do |target_thread|
-      error_exit "Thread #{target_thread} exited unexceptional..." if not target_thread.alive?
+    $threads.each do |thread|
+      error_exit "Thread #{thread} exited unexceptional..." if not thread.alive?
     end
 
     sleep 1

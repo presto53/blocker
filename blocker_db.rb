@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'posix/spawn'
 
 class Blocker_DB
@@ -24,11 +25,13 @@ class Blocker_DB
 		if (1024..65535) === @options['port']
       args = "-port #{@options['port']} -tout 10 -ls -dmn -pid #{@options['pid']} -log #{@options['log']} -th 8 *#bnum=8000#msiz=64m"
       cmd = "#{@options['bin']} #{args}"
-      if POSIX::Spawn::Child.new(cmd).success?
-			  @running = true
-      else
-        $log.error 'DB server start fail.'
-        @blocker.shutdown
+      $threads << Thread.new do
+        if POSIX::Spawn::Child.new(cmd).success?
+          $log.warning 'DB server was shutdown.'
+        else
+          $log.error 'DB server start fail.'
+          @blocker.shutdown
+        end
       end
     else
       $log.error 'No port option in config or port is invalid. Port must be between 1024 and 65535.'
@@ -55,7 +58,7 @@ class Blocker_DB
         $log.append 'DB process seem not running...'
       end
     else
-      $log.error "DB pid file not exist. No #{@options['pid']}"
+      $log.error "DB pid file does not exist. No #{@options['pid']}"
     end
 
 	end

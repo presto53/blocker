@@ -38,7 +38,7 @@ class Blocker_DB
         end
       end
       # Wait while db server starting
-      sleep 3
+      sleep 3 if @running
     else
       $log.error 'No port option in config or port is invalid. Port must be between 1024 and 65535.'
       @blocker.shutdown

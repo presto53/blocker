@@ -140,7 +140,11 @@ pid = fork do
   elsif not params['db']['server'] == 'no'
     error_exit 'Invalid server option in db section.'
   end
-  
+
+  # Check db connection
+  $tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
+  error_exit "Could not connect to db server #{params['db']['host']}:#{params['db']['port']}." if $tycoon.nil?
+
   # Validate target structure
   $log.append 'Start validating targets...'
   valid_target_structure.each do |target_option|
@@ -149,10 +153,6 @@ pid = fork do
     end
   end
   $log.append 'Targets structure validated.'
-
-  # Check db connection
-  $tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
-  error_exit "Could not connect to db server #{params['db']['host']}:#{params['db']['port']}." if $tycoon.nil?
 
   # Start targets viewing
   params['target'].each do |target|

@@ -128,8 +128,10 @@ pid = fork do
     error_exit "Failed to set db host. Check that host #{params['db']['host']} is valid IPv4 or IPv6 address."
   else
     $db_server = params['db']['host']
+    $log.append "DB host: #{$db_server}"
     if (1024..65535) === params['db']['port']
       $db_port = params['db']['port']
+      $log.append "DB port: #{$db_port}"
     else
       error_exit 'Failed to set db port. Port must be between 1024 and 65535.'
     end
@@ -144,7 +146,7 @@ pid = fork do
 
   # Check db connection
   params['db']['timeout'].times do
-    log.append 'Trying connect to db server...'
+    $log.append 'Trying connect to db server...'
     $tycoon = Tycoon.new("#{params['db']['host']}", "#{params['db']['port']}") rescue nil
     if $tycoon.nil?
       success = nil

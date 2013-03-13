@@ -24,7 +24,8 @@ valid_config_structure = {
         'host',
         'port',
         'pid',
-        'log'
+        'log',
+        'bin'
     ],
     'target' => nil,
     'rules' => nil

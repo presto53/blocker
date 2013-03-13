@@ -4,9 +4,10 @@ class Blocker_process
     @pid = $$
 		@pidf = pidf
 		if FileTest.exist?(@pidf)
-			system("kill -0 $(cat #{@pidf})")
-			if $? == 0
-	      $log.error 'Blocker daemon seems already running.'
+      pid =  File.read(@pidf).to_i
+      alive = Process.kill(0, pid) rescue nil
+      if alive
+			  $log.error 'Blocker daemon seems already running.'
         $log.close
 				exit 1
 			else

@@ -3,11 +3,12 @@
 	"pid": "/var/run/blocker.pid",
 	"log": "/var/log/blocker.log",
         "db": {
-		"server": "no",
-		"host": "127.0.0.1",
-                "port": 4200,
-                "pid": "/var/run/blocker_db.pid",
-                "log": "/var/log/blocker_db.log"
+		    "server": "no",
+		    "host": "127.0.0.1",
+            "port": 4200,
+            "pid": "/var/run/blocker_db.pid",
+            "log": "/var/log/blocker_db.log",
+            "bin": "/usr/bin/ktserver"
         },
 	"target": [
 			{ "log": "/var/log/auth.log", "rules": ["ssh"], "exceptions": ["internal","home"], "bantime": "300", "blockmethod": "iptables" }

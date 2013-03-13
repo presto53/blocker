@@ -60,6 +60,9 @@ raise "no pid section in #{config} file" if not params.key?('pid')
 # Check for log section
 raise "no log section in #{config} file" if not params.key?('log')
 
+# Init threads array
+$threads = []
+
 # Create new logger object
 $log = Blocker_logger.new(params['log'])
 
@@ -152,7 +155,6 @@ pid = fork do
   error_exit "Could not connect to db server #{params['db']['host']}:#{params['db']['port']}." if $tycoon.nil?
 
   # Start targets viewing
-  $threads = []
   params['target'].each do |target|
     if FileTest.exist?(target['log'])
       # Create banhammer object
@@ -182,7 +184,7 @@ pid = fork do
                     $log.append "IP #{ip} hit by the rule ***#{rule}***! But it is in exception list."
                   else
                     $log.append "IP #{ip} hit by the rule ***#{rule}***!"
-                    banhammer.ban(ip)
+                    #banhammer.ban(ip)
                   end
                 else
                   $log.warning "#{ip_matched.size} IP addresses matched. Skip."
@@ -200,9 +202,9 @@ pid = fork do
   # Main loop
   loop {
 
-    # Monitor running log threads  
+    # Monitor running threads
     $threads.each do |thread|
-      error_exit "Thread #{thread} exited unexceptional..." if not thread.alive?
+      error_exit "Thread #{thread} exit unexceptional..." if not thread.alive?
     end
 
     sleep 1

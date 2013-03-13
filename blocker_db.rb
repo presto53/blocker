@@ -26,13 +26,19 @@ class Blocker_DB
       args = "-port #{@options['port']} -tout 10 -ls -dmn -pid #{@options['pid']} -log #{@options['log']} -th 8 *#bnum=8000#msiz=64m"
       cmd = "#{@options['bin']} #{args}"
       $threads << Thread.new do
+        $log.append 'Create db thread...'
+        @running = true
         if POSIX::Spawn::Child.new(cmd).success?
+          @running = false
           $log.warning 'DB server was shutdown.'
         else
+          @running = false
           $log.error 'DB server start fail.'
           @blocker.shutdown
         end
       end
+      # Wait while db server starting
+      sleep 3
     else
       $log.error 'No port option in config or port is invalid. Port must be between 1024 and 65535.'
       @blocker.shutdown

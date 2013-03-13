@@ -154,6 +154,7 @@ pid = fork do
       success = true
       break
     end
+    break if success
     sleep 1
   end
   error_exit "Could not connect to db server #{params['db']['host']}:#{params['db']['port']}." if success.nil?

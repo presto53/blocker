@@ -1,9 +1,8 @@
 {
-	"daemon": "yes",
 	"pid": "/var/run/blocker.pid",
 	"log": "/var/log/blocker.log",
         "db": {
-		    "server": "no",
+		    "server": "yes",
 		    "host": "127.0.0.1",
             "port": 4200,
             "pid": "/var/run/blocker_db.pid",

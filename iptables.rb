@@ -5,23 +5,32 @@ class Iptables
 
   attr_reader :thread
 
-  def initialize(ports, chain, protocol)
+  def initialize(ports, chain, protocol, ip_version)
     @chain = chain
     @protocol = protocol
     @ports = ports.join(',')
     @results = []
-    @bin = `which iptables`.chomp rescue ''
+    if ip_version == 'ipv4'
+      @bin = `which iptables`.chomp rescue ''
+    elsif ip_version == 'ipv6'
+      raise 'system has no ipv6 support' if not File.exist?('/proc/net/if_inet6')
+      @bin = `which ip6tables`.chomp rescue ''
+    else
+      raise 'wrong ip version. must be ipv4 or ipv6'
+    end
 
     raise 'iptables must be run as root' if Process.uid != 0
     raise 'which or iptables commands not found' if @bin == ''
 
     @thread = Thread.new do
       loop do
-        @results.each do |result|
-          raise 'failed to add rule' if result == :unsuccess
-          exit
+        result = @results.pop()
+        if result == :unsuccess
+           self.exit
         end
-        sleep 5
+        if result == nil
+          sleep 1
+        end
       end
     end
   end

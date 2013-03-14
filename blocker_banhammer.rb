@@ -32,7 +32,7 @@ class Blocker_banhammer
       $blocker.shutdown
     else
       if value == ''
-        hit_counter == '1'
+        hit_counter = '1'
       else
         hit_counter = "#{value.to_i+1}"
       end

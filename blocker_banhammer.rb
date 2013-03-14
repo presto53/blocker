@@ -6,7 +6,7 @@ class Blocker_banhammer
       @method = 'i'
     else
       $log.error "unknown block method #{@target['blockmethod']}."
-      $blocker.exit
+      $blocker.shutdown
     end
   end
 
@@ -18,7 +18,7 @@ class Blocker_banhammer
         end
       else
         $log.error "no exception group #{exception_group}."
-        $blocker.exit
+        $blocker.shutdown
       end
     end
     false
@@ -28,14 +28,15 @@ class Blocker_banhammer
     key = "#{@method}_#{ip}"
     value = $tycoon.get_value(key)
     if value.nil?
-      log.warning "Can not get from db, key: #{key}."
+      $log.error "Can not get from db, key: #{key}. DB server not available."
+      $blocker.shutdown
     else
       if value == ''
         hit_counter == '1'
       else
         hit_counter = "#{value.to_i+1}"
       end
-      log.warning "Can not set in db, key: #{key} value: #{hit_counter}." if $tycoon.set_value(key,hit_counter, @target['bantime']).nil?
+      $log.warning "Can not set in db, key: #{key} value: #{hit_counter}." if $tycoon.set_value(key,hit_counter, @target['bantime']).nil?
     end
   end
 

@@ -10,6 +10,7 @@ class Iptables
     @protocol = protocol
     @ports = ports.join(',')
     @results = []
+    # Check for ipv4 or ipv6 use
     if ip_version == 'ipv4'
       @bin = `which iptables`.chomp rescue ''
     elsif ip_version == 'ipv6'
@@ -22,6 +23,8 @@ class Iptables
     raise 'iptables must be run as root' if Process.uid != 0
     raise 'which or iptables commands not found' if @bin == ''
 
+    # Start thread for monitoring results of
+    # asynchronous add and del rule commands
     @thread = Thread.new do
       loop do
         result = @results.pop()
@@ -55,6 +58,7 @@ class Iptables
     raise "cannot add chain #{@chain}" if not POSIX::Spawn::Child.new(cmd).success?
   end
 
+  # Add main rule in INPUT chain and create new chain for rules
   def add_chain
     cmd = "#{@bin} -L #{@chain}"
     if not POSIX::Spawn::Child.new(cmd).success?
@@ -86,6 +90,7 @@ class Iptables
 
   private
 
+  # Asynchronous run command
   def run_cmd(cmd)
     Thread.new do
       if POSIX::Spawn::Child.new(cmd).success?

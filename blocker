@@ -29,7 +29,8 @@ valid_config_structure = {
         'timeout'
     ],
     'target' => nil,
-    'rules' => nil
+    'rules' => nil,
+    'ipv6' => nil
 }
 
 # Structure of valid target
@@ -198,7 +199,7 @@ pid = fork do
                     $log.append "IP #{ip} hit by the rule ***#{rule}***! But it is in exception list."
                   else
                     $log.append "IP #{ip} hit by the rule ***#{rule}***!"
-                    #banhammer.ban(ip)
+                    banhammer.ban(ip)
                   end
                 else
                   $log.warning "#{ip_matched.size} IP addresses matched. Skip."

@@ -2,6 +2,8 @@ require 'net/http'
 require 'uri'
 
 class Tycoon
+
+  # Check that server is available and Server header is correct
   def initialize(host, port)
     @ktserver = 'KyotoTycoon\/([0-9]{1,}\.){1,}[0-9]{1,}'
     @url = "http://#{host}:#{port}"
@@ -19,11 +21,11 @@ class Tycoon
     uri = URI.parse(URI.escape("#{@url}/#{key}"))
     response = Net::HTTP.get_response(uri)
     if response.code == '200'
-      response.body
+      return response.body
     elsif response.code == '404'
-      ''
+      return ''
     else
-      nil
+      return nil
     end
   end
 
@@ -31,9 +33,10 @@ class Tycoon
     uri = URI.parse(URI.escape("#{@url}/rpc/set"))
     response = Net::HTTP.post_form(uri,{'key' => key, 'value' => value, 'xt' => expiration_timeout})
     if response.code == '200'
-      response.code
+      return response.code
     else
-      nil
+      return nil
     end
   end
+
 end

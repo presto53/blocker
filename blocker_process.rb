@@ -20,6 +20,9 @@ class Blocker_process
 
   def shutdown
     $db.stop_db if not $db.nil? and $db.running?
+    $threads.each do |thread|
+      thread.exit
+    end
     $log.append("Stopping blocker daemon: pid #{@pid}...")
     $log.close
     pid_remove

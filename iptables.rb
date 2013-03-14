@@ -61,12 +61,18 @@ class Iptables
   end
 
   def remove_chain
-    cmd = "#{@bin} -F #{@chain}"
-    raise "cannot flush chain #{@chain}" if not POSIX::Spawn::Child.new(cmd).success?
-    cmd = "#{@bin} -D INPUT -p #{@protocol} -m multiport --dports #{@ports} -j #{@chain}"
-    raise "cannot delete INPUT rule for chain #{@chain}" if not POSIX::Spawn::Child.new(cmd).success?
-    cmd = "#{@bin} -X #{@chain}"
-    raise "cannot delete chain #{@chain}" if not POSIX::Spawn::Child.new(cmd).success?
+    cmd = "#{@bin} -L #{@chain}"
+    if POSIX::Spawn::Child.new(cmd).success?
+      cmd = "#{@bin} -F #{@chain}"
+      raise "cannot flush chain #{@chain}" if not POSIX::Spawn::Child.new(cmd).success?
+      cmd = "#{@bin} -C INPUT -p #{@protocol} -m multiport --dports #{@ports} -j #{@chain}"
+      if POSIX::Spawn::Child.new(cmd).success?
+        cmd = "#{@bin} -D INPUT -p #{@protocol} -m multiport --dports #{@ports} -j #{@chain}"
+        raise "cannot delete INPUT rule for chain #{@chain}" if not POSIX::Spawn::Child.new(cmd).success?
+      end
+      cmd = "#{@bin} -X #{@chain}"
+      raise "cannot delete chain #{@chain}" if not POSIX::Spawn::Child.new(cmd).success?
+    end
   end
 
   private

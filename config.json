@@ -11,7 +11,7 @@
         "timeout": 10
     },
     "target": [
-        { "log": "/var/log/auth.log", "rules": ["ssh"], "exceptions": ["internal","home"], "ports": [22,80], "bantime": "300", "blockmethod": "iptables" }
+        { "name": "blocker-ssh", "log": "/var/log/auth.log", "rules": ["ssh"], "exceptions": ["internal","home"], "ports": [22,80], "bantime": "300", "blockmethod": "iptables" }
     ],
     "rules": {
         "ssh": [

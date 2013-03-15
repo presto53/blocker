@@ -32,11 +32,17 @@ class Blocker_banhammer
       $blocker.shutdown
     else
       if value == ''
-        hit_counter = '1'
+        hit_counter = 1
       else
-        hit_counter = "#{value.to_i+1}"
+        hit_counter = value.to_i+1
       end
-      $log.warning "Can not set in db, key: #{key} value: #{hit_counter}." if $tycoon.set_value(key,hit_counter, @target['bantime']).nil?
+      if hit_counter > @target['tries']
+        if $tycoon.set_value(key,hit_counter, @target['bantime']).nil?
+          $log.warning "Can not set in db, key: #{key} value: #{hit_counter}."
+        else
+          $log.append "#{ip} banned."
+        end
+      end
     end
   end
 

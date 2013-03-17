@@ -42,7 +42,7 @@ valid_target_structure = [
     'exceptions',
     'ports',
     'protocol',
-    'tries'
+    'tries',
     'bantime',
     'blockmethod'
 ]
@@ -161,7 +161,7 @@ pid = fork do
   success = false
   $params['db']['timeout'].times do
     $log.append 'Trying connect to db server...'
-    $tycoon = Tycoon.new("#{$params['db']['host']}", "#{params['db']['port']}") rescue nil
+    $tycoon = Tycoon.new($params['db']['host'], $params['db']['port']) rescue nil
     if $tycoon.nil?
       success = false
     else
@@ -171,7 +171,7 @@ pid = fork do
     break if success == true
     sleep 1
   end
-  error_exit "Could not connect to db server #{$params['db']['host']}:#{params['db']['port']}." if success == false
+  error_exit "Could not connect to db server #{$params['db']['host']}:#{$params['db']['port']}." if success == false
 
   # Validate target structure
   $log.append 'Start validating targets...'
@@ -197,11 +197,15 @@ pid = fork do
       end
       error_exit 'Supported protocols now only tcp and udp.' if not target['protocol'] == 'tcp' or target['protocol'] == 'udp'
       target['ports'].each do |port|
-	error_exit 'Port must be num between 1024 and 65535' if not port.kind_of?(Fixnum) or port < 1024 or port > 65535
+	error_exit 'Port must be num between 0 and 65535' if not port.kind_of?(Fixnum) or port === (0..65535)
       end
       if target['blockmethod'] == 'iptables'
         $iptables = Iptables.new(target['ports'], target['name'], target['protocol'])
-        $ip6tables = Ip6tables.new(target['ports'], target['name'], target['protocol']) if $params['ipv6'] == 'yes'
+	$threads << $iptables.thread
+	if $params['ipv6'] == 'yes'
+	  $ip6tables = Ip6tables.new(target['ports'], target['name'], target['protocol'])
+	  $threads << $ip6tables.thread
+	end 
       end
       # Loading rules for target
       rules = []

@@ -23,7 +23,7 @@ class Blocker_DB
 
   def start_db
     if (1024..65535) === @options['port']
-      args = "-port #{@options['port']} -tout 10 -ls -dmn -pid #{@options['pid']} -log #{@options['log']} -th 8 *#bnum=8000#msiz=64m"
+      args = "-host #{@options['host']} -port #{@options['port']} -tout 10 -ls -dmn -pid #{@options['pid']} -log #{@options['log']} -th 8 *#bnum=8000#msiz=64m"
       cmd = "#{@options['bin']} #{args}"
       sh cmd do |ok, res|
         if not ok

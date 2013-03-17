@@ -2,9 +2,7 @@ class Blocker_banhammer
 
   def initialize(target)
     @target = target
-    if @target['blockmethod'] == 'iptables'
-      @method = 'i'
-    else
+    if not @target['blockmethod'] == 'iptables'
       $log.error "unknown block method #{@target['blockmethod']}."
       $blocker.shutdown
     end
@@ -25,7 +23,7 @@ class Blocker_banhammer
   end
 
   def ban(ip)
-    key = "#{@method}_#{ip}"
+    key = "#{@target['blockmethod']}_#{ip}"
     value = $tycoon.get_value(key)
     if value.nil?
       $log.error "Can not get from db, key: #{key}. DB server not available."
@@ -38,7 +36,7 @@ class Blocker_banhammer
       end
       $log.warning "Can not set in db, key: #{key} value: #{hit_counter}." if $tycoon.set_value(key,hit_counter, @target['bantime']).nil?
       if hit_counter > @target['tries']
-        if @method == 'iptables'
+        if @target['blockmethod'] == 'iptables'
 	  $ip6tables.add_rule(ip) if IPAddr.new(ip).ipv6? and $params['ipv6'] == 'yes' 
 	  $iptables.add_rule(ip) if IPAddr.new(ip).ipv4?
 	end  

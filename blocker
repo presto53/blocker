@@ -202,11 +202,11 @@ pid = fork do
       if target['blockmethod'] == 'iptables'
         $iptables = Iptables.new
 	$threads << $iptables.thread
-	$iptables.add_chain(target['ports'], target['name'], target['protocol'])
+	$iptables.add_chain(target['name'], target['protocol'], target['ports'])
 	if $params['ipv6'] == 'yes'
 	  $ip6tables = Ip6tables.new
 	  $threads << $ip6tables.thread
-	  $ip6tables.add_chain(target['ports'], target['name'], target['protocol'])
+	  $ip6tables.add_chain(target['name'], target['protocol'], target['ports'])
 	end 
       end
       # Loading rules for target
@@ -266,9 +266,9 @@ pid = fork do
       # Check that chains and main rules exist
       # if not exist create it
       $params['target'].each do |target|
-	$iptables.add_chain(target['ports'], target['name'], target['protocol'])
+	$iptables.add_chain(target['name'], target['protocol'], target['ports'])
 	if $params['ipv6'] == 'yes'
-	  $ip6tables.add_chain(target['ports'], target['name'], target['protocol'])
+	  $ip6tables.add_chain(target['name'], target['protocol'], target['ports'])
 	end 
       end
     end

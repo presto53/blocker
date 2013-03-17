@@ -202,9 +202,11 @@ pid = fork do
       if target['blockmethod'] == 'iptables'
         $iptables = Iptables.new(target['ports'], target['name'], target['protocol'])
 	$threads << $iptables.thread
+	$iptables.add_chain
 	if $params['ipv6'] == 'yes'
-	  $ip6tables = Ip6tables.new(target['ports'], target['name'], target['protocol'])
+	  $ip6tables = Ip6t ables.new(target['ports'], target['name'], target['protocol'])
 	  $threads << $ip6tables.thread
+	  $ip6tables.add_chain
 	end 
       end
       # Loading rules for target

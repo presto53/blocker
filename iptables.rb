@@ -13,6 +13,8 @@ class Iptables
     raise 'iptables must be run as root' if Process.uid != 0
     raise 'which or iptables commands not found' if @bin == ''
 
+    @version = POSIX::Spawn::Child.new("#{@bin} --version").out.match('[1-9]\.[0-9]{1,}\.[0-9]{1,}')[0].split('.').join.to_i
+
     # Start thread for monitoring results of
     # asynchronous add and del rule commands
     @thread = Thread.new do
@@ -37,12 +39,14 @@ class Ip6tables
   attr_reader :thread
 
   def initialize
-    @results = []
+    @results = [] 
     raise 'system has no ipv6 support' if not File.exist?('/proc/net/if_inet6')
     @bin = `which ip6tables`.chomp rescue ''
 
     raise 'iptables must be run as root' if Process.uid != 0
     raise 'which or iptables commands not found' if @bin == ''
+
+    @version = POSIX::Spawn::Child.new("#{@bin} --version").out.match('[1-9]\.[0-9]{1,}\.[0-9]{1,}')[0].split('.').join.to_i
 
     # Start thread for monitoring results of
     # asynchronous add and del rule commands

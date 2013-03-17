@@ -27,9 +27,11 @@ class Blocker_process
     $log.close
     pid_remove
     $params['target'].each do |target|
-      $iptables.remove_chain(target['name'],target['protocol'],target['ports'])
-      if $params['ipv6'] == yes
-	$ip6tables.remove_chain(target['name'],target['protocol'],target['ports'])
+      if target['blockmethod'] == 'iptables'
+	$iptables.remove_chain(target['name'],target['protocol'],target['ports'])
+	if $params['ipv6'] == 'yes'
+	  $ip6tables.remove_chain(target['name'],target['protocol'],target['ports'])
+	end
       end
     end
     exit 1
@@ -38,6 +40,14 @@ class Blocker_process
   def critical_error
     $log.append("Stopping blocker daemon: pid #{@pid}...")
     pid_remove
+    $params['target'].each do |target|
+      if target['blockmethod'] == 'iptables'
+	$iptables.remove_chain(target['name'],target['protocol'],target['ports'])
+	if $params['ipv6'] == 'yes'
+	  $ip6tables.remove_chain(target['name'],target['protocol'],target['ports'])
+	end
+      end
+    end
     exit 100
   end
 

@@ -37,8 +37,8 @@ class Blocker_banhammer
       $log.warning "Can not set in db, key: #{key} value: #{hit_counter}." if $tycoon.set_value(key,hit_counter, @target['bantime']).nil?
       if hit_counter > @target['tries']
         if @target['blockmethod'] == 'iptables'
-	  $ip6tables.add_rule(ip) if IPAddr.new(ip).ipv6? and $params['ipv6'] == 'yes' 
-	  $iptables.add_rule(ip) if IPAddr.new(ip).ipv4?
+	  $ip6tables.add_rule(ip,@target['name']) if IPAddr.new(ip).ipv6? and $params['ipv6'] == 'yes' 
+	  $iptables.add_rule(ip,@target['name']) if IPAddr.new(ip).ipv4?
 	end  
         $log.append "#{ip} banned."
       end

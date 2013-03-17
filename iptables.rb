@@ -6,10 +6,7 @@ class Iptables
 
   attr_reader :thread
 
-  def initialize(ports, chain, protocol)
-    @chain = chain
-    @protocol = protocol
-    @ports = ports.join(',')
+  def initialize
     @results = []
     @bin = `which iptables`.chomp rescue ''
 
@@ -39,10 +36,7 @@ class Ip6tables
 
   attr_reader :thread
 
-  def initialize(ports, chain, protocol)
-    @chain = chain
-    @protocol = protocol
-    @ports = ports.join(',')
+  def initialize
     @results = []
     raise 'system has no ipv6 support' if not File.exist?('/proc/net/if_inet6')
     @bin = `which ip6tables`.chomp rescue ''

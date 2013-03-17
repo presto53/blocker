@@ -200,13 +200,13 @@ pid = fork do
 	error_exit 'Port must be num between 0 and 65535' if not port.kind_of?(Fixnum) or port === (0..65535)
       end
       if target['blockmethod'] == 'iptables'
-        $iptables = Iptables.new(target['ports'], target['name'], target['protocol'])
+        $iptables = Iptables.new
 	$threads << $iptables.thread
-	$iptables.add_chain
+	$iptables.add_chain(target['ports'], target['name'], target['protocol'])
 	if $params['ipv6'] == 'yes'
-	  $ip6tables = Ip6tables.new(target['ports'], target['name'], target['protocol'])
+	  $ip6tables = Ip6tables.new
 	  $threads << $ip6tables.thread
-	  $ip6tables.add_chain
+	  $ip6tables.add_chain(target['ports'], target['name'], target['protocol'])
 	end 
       end
       # Loading rules for target

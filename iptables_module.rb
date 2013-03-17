@@ -9,7 +9,22 @@ module Iptables_module
   end
 
   def list(chain)
-    raise "cannot add chain #{chain}" if not POSIX::Spawn::Child.new("#{@bin} -L #{chain} -n").success?
+    result = POSIX::Spawn::Child.new("#{@bin} -L #{chain} -n")
+    if result.success?
+      ip_list = []
+      result.out.split(/\n/).each do |line|
+	if line.match('^DROP')
+	  line.split(/\s/).each do |ip|
+	    if !(IPAddr.new(ip) rescue nil).nil?
+	      ip_list << ip if not ip.match('/')
+	    end
+	  end
+	end
+      end
+    else
+      raise "cannot add chain #{chain}" 
+    end
+    ip_list
   end
 
   # Add main rule in INPUT chain and create new chain for rules

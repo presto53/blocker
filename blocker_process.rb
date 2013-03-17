@@ -20,16 +20,18 @@ class Blocker_process
 
   def shutdown
     $db.stop_db if not $db.nil? and $db.running?
-    $iptables.remove_chain
-    if $params['ipv6'] == yes
-      $ip6tables.remove_chain
-    end
     $threads.each do |thread|
-      thread.exit
+	thread.exit
     end
     $log.append("Stopping blocker daemon: pid #{@pid}...")
     $log.close
     pid_remove
+    $params['target'].each do |target|
+      $iptables.remove_chain(target['name'],target['protocol'],target['ports'])
+      if $params['ipv6'] == yes
+	$ip6tables.remove_chain(target['name'],target['protocol'],target['ports'])
+      end
+    end
     exit 1
   end
 

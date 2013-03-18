@@ -27,7 +27,11 @@ module Iptables_module
 	if line.match('^DROP')
 	  line.split(/\s/).each do |ip|
 	    if !(IPAddr.new(ip) rescue nil).nil?
+	      if ip.match('/128')
+		ip_list << ip.sub('/128','')
+	      else
 		ip_list << ip if not ip.match('/0')
+	      end
 	    end
 	  end
 	end

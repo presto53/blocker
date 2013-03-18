@@ -279,6 +279,7 @@ pid = fork do
 	      $blocker.shutdown
 	    else
 	      if value == ''
+		$log.append "Trying to delete #{ip} from #{target['name']}"
 		$iptables.del_rule(ip, target['name'])
 	      end
 	    end
@@ -290,11 +291,13 @@ pid = fork do
 	    ipv6_banned.each do |ip|
 	      # Get from tycoon, if not exist delete rule
 	      $log.append "#{ip} in banned list."
+	      value = $tycoon.get_value(ip)
 	      if value.nil?
 		$log.error "Can not get from db, key: #{ip}. DB server not available."
 		$blocker.shutdown
 	      else
 		if value == ''
+		  $log.append "Trying to delete #{ip} from #{target['name']}"
 		  $ip6tables.del_rule(ip, target['name'])
 		end
 	      end

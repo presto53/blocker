@@ -27,7 +27,7 @@ module Iptables_module
 	if line.match('^DROP')
 	  line.split(/\s/).each do |ip|
 	    if !(IPAddr.new(ip) rescue nil).nil?
-	      ip_list << ip if not ip.match('/')
+		ip_list << ip if not ip.match('/0')
 	    end
 	  end
 	end

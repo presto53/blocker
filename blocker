@@ -273,6 +273,15 @@ pid = fork do
 	  ipv4_banned.each do |ip|
 	    # Get from tycoon, if not exist delete rule
 	    $log.append "#{ip} in banned list."
+	    value = $tycoon.get_value(ip)
+	    if value.nil?
+	      $log.error "Can not get from db, key: #{ip}. DB server not available."
+	      $blocker.shutdown
+	    else
+	      if value == ''
+		$iptables.del_rule(ip, target['name'])
+	      end
+	    end
 	  end
 	  if $params['ipv6'] == 'yes'
 	    $ip6tables.add_chain(target['name'], target['protocol'], target['ports'])
@@ -281,6 +290,14 @@ pid = fork do
 	    ipv6_banned.each do |ip|
 	      # Get from tycoon, if not exist delete rule
 	      $log.append "#{ip} in banned list."
+	      if value.nil?
+		$log.error "Can not get from db, key: #{ip}. DB server not available."
+		$blocker.shutdown
+	      else
+		if value == ''
+		  $ip6tables.del_rule(ip, target['name'])
+		end
+	      end
 	    end
 	  end
 	end

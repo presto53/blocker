@@ -1,11 +1,22 @@
+require 'posix/spawn'
+
 module Iptables_module
 
   def add_rule(source, chain)
     run_cmd("#{@bin} -A #{chain} -s #{source} -j DROP")
   end
 
-  def del_rule(source)
+  def del_rule(source, chain)
     run_cmd("#{@bin} -D #{chain} -s #{source} -j DROP")
+  end
+
+  def rule_exist?(source, chain)
+    if POSIX::Spawn::Child.new("#{@bin} -D #{chain} -s #{source} -j DROP").success?
+       POSIX::Spawn::Child.new("#{@bin} -A #{chain} -s #{source} -j DROP")
+       true
+    else
+      false
+    end
   end
 
   def list(chain)
@@ -54,7 +65,7 @@ module Iptables_module
 
   # Asynchronous run command
   def run_cmd(cmd)
-    Thread.new do
+    Thread.new do 
       if POSIX::Spawn::Child.new(cmd).success?
         @results << :success
       else

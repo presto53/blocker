@@ -263,13 +263,29 @@ pid = fork do
     # Check every 1 min
     if time_counter % 60 == 0
       time_counter = 0
+      ipv4_banned = []
+      ipv6_banned = []
       # Check that chains and main rules exist
-      # if not exist create it
+      # if they not exist create it
       $params['target'].each do |target|
-	$iptables.add_chain(target['name'], target['protocol'], target['ports'])
-	if $params['ipv6'] == 'yes'
-	  $ip6tables.add_chain(target['name'], target['protocol'], target['ports'])
-	end 
+	if target['blockmethod'] == 'iptables'
+	  $iptables.add_chain(target['name'], target['protocol'], target['ports'])
+	  # Get banned IPv4 addresses
+	  ipv4_banned = $iptables.list(target['name'])
+	  ipv4_banned.each do |ip|
+	    # Get from tycoon, if not exist delete rule
+	    $log.append "#{ip} in banned list."
+	  end
+	  if $params['ipv6'] == 'yes'
+	    $ip6tables.add_chain(target['name'], target['protocol'], target['ports'])
+	    # Get banned IPv6 addresses
+	    ipv6_banned = $ip6tables.list(target['name'])
+	    ipv6_banned.each do |ip|
+	      # Get from tycoon, if not exist delete rule
+	      $log.append "#{ip} in banned list."
+	    end
+	  end
+	end
       end
     end
 
